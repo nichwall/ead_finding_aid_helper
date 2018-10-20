@@ -151,52 +151,81 @@ def create_node(group, text):
     return node
 
 # DEBUG
-source_1 = """<tr>
-<td>1</td>
-<td>8</td>
-<td class="c0x_content" id="id2_c03_3_c04_7">
-<div class="c04">1.1.2.6 : Rice Pudding with Secret
-                           Almond<div class="scopecontent">.2 (item)</div>
-</div>
-</td>
-</tr>"""
-source_2 = """<tr>
-<td>1</td>
-<td>6</td>
-<td class="c0x_content" id="id1_c02_9_c03_3">
-<div class="c03">1.8.2 : Dinner for "Midsummers"<div class="scopecontent">.1 (items)</div>
-</div>
-</td>
-</tr>"""
-source_3 = """<tr>
-<td>2</td>
-<td>4</td>
-<td class="c0x_content" id="id13_c03_34_c04_3">
-<div class="c04">1.12.0.2: Skiing<div class="scopecontent">.1(items)</div>
-</div>
-</td>
-</tr>"""
-source_4 = """<tr>
-<td colspan="2"></td>
-<td class="c0x_content" id="id14_c03_14_c04_13">
-<div class="c04">1.13.13.12: Visit Other Family Members<div class="scopecontent">.1(item)</div>
-</div>
-</td>
-</tr>"""
-source_5 = """<tr>
-<td>5</td>
-<td>1</td>
-<td class="c0x_content" id="id1_c02_14_c03_18">
-<div class="c03">1.13.0. : Miscellaneous </div>
-</td>
-</tr>"""
-print(create_node(3,source_1))
-print(create_node(3,source_2))
-print(create_node(3,source_3))
-print(create_node(3,source_4))
-print(create_node(3,source_5))
+def debug():
+    source_1 = """<tr>
+    <td>1</td>
+    <td>8</td>
+    <td class="c0x_content" id="id2_c03_3_c04_7">
+    <div class="c04">1.1.2.6 : Rice Pudding with Secret
+                               Almond<div class="scopecontent">.2 (item)</div>
+    </div>
+    </td>
+    </tr>"""
+    source_2 = """<tr>
+    <td>1</td>
+    <td>6</td>
+    <td class="c0x_content" id="id1_c02_9_c03_3">
+    <div class="c03">1.8.2 : Dinner for "Midsummers"<div class="scopecontent">.1 (items)</div>
+    </div>
+    </td>
+    </tr>"""
+    source_3 = """<tr>
+    <td>2</td>
+    <td>4</td>
+    <td class="c0x_content" id="id13_c03_34_c04_3">
+    <div class="c04">1.12.0.2: Skiing<div class="scopecontent">.1(items)</div>
+    </div>
+    </td>
+    </tr>"""
+    source_4 = """<tr>
+    <td colspan="2"></td>
+    <td class="c0x_content" id="id14_c03_14_c04_13">
+    <div class="c04">1.13.13.12: Visit Other Family Members<div class="scopecontent">.1(item)</div>
+    </div>
+    </td>
+    </tr>"""
+    source_5 = """<tr>
+    <td>5</td>
+    <td>1</td>
+    <td class="c0x_content" id="id1_c02_14_c03_18">
+    <div class="c03">1.13.0. : Miscellaneous </div>
+    </td>
+    </tr>"""
+    print(create_node(3,source_1))
+    print(create_node(3,source_2))
+    print(create_node(3,source_3))
+    print(create_node(3,source_4))
+    print(create_node(3,source_5))
 
-# Read in from file
-file = open('../html/testing.html','r')
-readed = file.read()
-file.close()
+def page_parse(group=1):
+    # Read in from file
+    file = open('../html/testing.html','r')
+    readed = file.read()
+    file.close()
+    
+    page_output = []
+
+    table_index = readed.find("<h4 id=")+64
+    # Finding the headers for the different sub tables
+    while (table_index > 64):
+        identifier_end = readed.find(":",table_index)
+        identifier = readed[table_index:identifier_end].strip()
+        # Strip period if it exists
+        if(identifier[-1]=="."):
+            identifier = identifier[:-1]
+
+        title_begin = readed.find(";",table_index)+1
+        title_end   = readed.find("<",table_index)
+        title = readed[title_begin:title_end].strip()
+
+        tree = category(group, [-1,-1], [-1,-1], identifier, title)
+        print(tree)
+        page_output.append(tree)
+
+        # TODO Loop through what's inside of the table and create the tree for parsing and writing to a file
+
+        table_index = readed.find("<h4 id=",table_index)+64
+    print(page_output)
+
+#debug()
+page_parse()
