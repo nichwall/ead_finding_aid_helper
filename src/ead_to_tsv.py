@@ -1,5 +1,6 @@
 # This file parses through all of the URLs given in `./sources.txt`, downloads them, and creates a TSV file with all of the information for easier parsing
 import re
+import time
 
 # Parent class
 class entry:
@@ -95,7 +96,41 @@ class category(entry):
 ###########################################
 #  Parse webpage to create tree of items  #
 ###########################################
+# Group: the group number
+# Text:  Text of the webpage
+# nodeStart: index of where to start searching for the next node
+#
+# @return [textOfNode, nextNodeStart]
+def find_node_text(group, text, searchStart):
+    # Takes in the text from the webpage and get the node out
+
+    # Find token for beginning of row
+    nodeStart = text.find("<tr>",searchStart)
+    # Find token for end of row
+    endOfNode = text.find("</tr>",nodeStart)+5
+    # Get the text within the row
+    textOfNode = text[nodeStart:endOfNode]
+    return [textOfNode, endOfNode]
+# Check that we have a valid node that can be generated
+def is_valid_node(text):
+    # Check for content
+    if (len(text) == 0):
+        return False
+    # Check that we are not dealing with a header in the guide
+    if (text.find("Container(s)") != -1):
+        return False
+    # Check that we aren't dealing with the Box/Folder lines
+    if (text.find('<td><span class="containerLabel">Box</span></td>') != -1):
+        return False
+    # Check that not at the end of the table
+    if (text.find("tbody>") != -1):
+        return False
+    return True
+
+# Create the node from the text given
 def create_node(group, text):
+    if (not is_valid_node(text)):
+        return -1
     node = 0
     # Strip newlines from text, replace with spaces. Search through string to find tags, then get values from tags
     # If the desired tag cannot be found, then skip it and set it to default value
@@ -125,21 +160,25 @@ def create_node(group, text):
         if len(folders) == 1:
             folders.append(folders[0])
         elif len(folders)==3 and folders[2].isdigit():
-            folders[1]=folders[2]
-            folders = folders[:1]
+            folders.pop(1)
 
     # Split the entry into the identifier and the title
     identifier_begin = text.find("<div class")+17
-    identifier_end   = text.find("<",identifier_begin)
+    identifier_end   = text.find("</",identifier_begin)
     identifier = text[identifier_begin:identifier_end].split(":")[0].replace(" ","")
+    # Strip out bold tag if it's a major category TODO Store that it was bolded?
+    if (identifier.find("<") != -1):
+        identifier = identifier[identifier.find(">")+1:]
     # Strip tailing period from identifier if exists
     if (identifier[-1]=="."):
         identifier = identifier[:-1]
-    title      = text[identifier_begin:identifier_end].split(":")[1].strip()
+    # Get the title from the text, ignoring everything after "<" because of additional tags
+    title = text[identifier_begin:identifier_end].split(":")[-1].strip().split("<")[0]
 
     # Get the items out of the string
     items_begin = text.find("scopecontent")+15
     items_end   = text.find(" ",items_begin)
+    # Check that this is an item and not a category
     if (items_begin > 15):
         items = re.findall(r'\d+',text[items_begin:items_end])
         item_count = items[-1]
@@ -208,6 +247,7 @@ def page_parse(group=1):
     table_index = readed.find("<h4 id=")+64
     # Finding the headers for the different sub tables
     while (table_index > 64):
+        print(table_index)
         identifier_end = readed.find(":",table_index)
         identifier = readed[table_index:identifier_end].strip()
         # Strip period if it exists
@@ -222,9 +262,18 @@ def page_parse(group=1):
         print(tree)
         page_output.append(tree)
 
-        # TODO Loop through what's inside of the table and create the tree for parsing and writing to a file
-
+        print("Title_begin: ",title_begin)
         table_index = readed.find("<h4 id=",table_index)+64
+
+    # Get every item out of the webpage, create the node, and insert into correct value
+    start_point = 1
+    lastStart = 0
+    while (lastStart < start_point):
+        found_node_output = find_node_text(group, readed, start_point)
+        print(create_node(group,found_node_output[0]))
+        lastStart = start_point
+        start_point = found_node_output[1]
+
     print(page_output)
 
 #debug()
