@@ -285,8 +285,12 @@ def page_parse(group=1, readed=""):
         if (identifier.find(".") != 0):
             identifier = identifier.split(".")[0]
 
-        table_index = readed.find("<h4 id=",identifier_end)
+        title_end = readed.find("<",identifier_end)
+        title = readed[identifier_end+8:title_end]
+        node = category(group, identifier=identifier, item_title=title)
+        nodes.append(node)
 
+        table_index = readed.find("<h4 id=",identifier_end)
 
     # Get every item out of the webpage, create the node, and insert into correct value
     start_point = 1
