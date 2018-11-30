@@ -70,7 +70,8 @@ class item(entry):
         self.count = item_count
     # Accessor methods
     def get_count(self):
-        return '.'+str(self.count)+' (items)'
+        #return '.'+str(self.count)+' (items)'
+        return str(self.count)
 
     def output_to_file(self, delimeter):
         out  = str(super().get_group()) + delimeter
@@ -146,6 +147,12 @@ def is_valid_node(text):
         return False
     return True
 
+# Remove extra spaces between words
+def clear_spaces(text):
+    while (text.find("  ") != -1):
+        text = text.replace("  "," ")
+    return text
+
 # Create the node from the text given
 def create_node(group, text):
     if (not is_valid_node(text)):
@@ -153,10 +160,10 @@ def create_node(group, text):
     node = 0
     # Strip newlines from text, replace with spaces. Search through string to find tags, then get values from tags
     # If the desired tag cannot be found, then skip it and set it to default value
-    text = text.replace("\n"," ")
+    text = text.replace('\n'," ")
+    text = text.replace('\r'," ")
     # Remove duplicate spaces
-    while (text.find("  ") != -1):
-        text = text.replace("  "," ")
+    clear_spaces(text)
 
     # Strip the tags around the entry for the box number
     box_begin = text.find("<td>")+4
@@ -286,7 +293,9 @@ def page_parse(group=1, readed=""):
             identifier = identifier.split(".")[0]
 
         title_end = readed.find("<",identifier_end)
-        title = readed[identifier_end+8:title_end]
+        #title = readed[identifier_end+8:title_end] # This is for if using downloaded files
+        title = readed[identifier_end+1:title_end].strip()
+        title = clear_spaces(title)
         node = category(group, identifier=identifier, item_title=title)
         nodes.append(node)
 
@@ -321,18 +330,18 @@ def create_tsv(filename="output.tsv", nodes=[]):
 
 def get_webpage(url):
     #mystr = urllib.request.urlopen(url).read().decode("utf8")
-    fp = urllib.request.urlopen(url)
-    charset = fp.headers.get_param('charset')
-    mystr = fp.read().decode(charset)
     #fp = urllib.request.urlopen(url)
-    #mybytes = fp.read()
-    #mystr = mybytes.decode("utf8")
-    #fp.close()
-    print(mystr)
+    #charset = fp.headers.get_param('charset')
+    #mystr = fp.read().decode(charset)
+    fp = urllib.request.urlopen(url)
+    mybytes = fp.read()
+    mystr = mybytes.decode("utf8")
+    fp.close()
+    #print(mystr)
     return mystr
 
 def test_webpage():
-    webpage = get_webpage("http://archiveswest.orbiscascade.org/ark:/80444/xv09976")
+    webpage = get_webpage("http://archiveswest.orbiscascade.org/ark:/80444/xv36322")
     file = open("download.html",'w')
     file.write(webpage)
     file.close()
@@ -350,17 +359,21 @@ def load_from_file(name):
     return readed
 
 def main():
-    sources = load_sources("local_sources.txt")
+    #sources = load_sources("local_sources.txt")
+    sources = load_sources()
 
     allNodes = []
     for i in range(len(sources)):
         print(sources[i])
-        #print(" Downloading EAD guides from the internet...",end='')
-        #webpage = get_webpage("http://archiveswest.orbiscascade.org/ark:/80444/xv09976")
-        #print("not implemented")
+
+        print(" Downloading EAD guides from the internet...",end='')
+        html_text = get_webpage(sources[i])
+        print("not implemented")
+        """
         print(" Loading file...",end='')
         html_text = load_from_file(sources[i])
         print("done")
+        """
 
         print(" Converting to TSV...",end='')
         nodes = page_parse(i+1,html_text)
