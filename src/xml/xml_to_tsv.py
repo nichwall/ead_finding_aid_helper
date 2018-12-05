@@ -91,8 +91,6 @@ def forEach(obj, group):
 
     # Recurse to get all children
     entries = []
-    if entry['unitid'] == "1.1.2.13.4.":
-        print(obj.keys())
     for k,v in obj.items():
         if 'c0' in k:
             if isinstance(v,dict):
@@ -102,31 +100,8 @@ def forEach(obj, group):
                 for i in v:
                     for e in forEach(i,group):
                         entries.append(e)
-            """
-            for i in v:
-                if entry['unitid'] == "1.1.2.13.4.":
-                    print(type(k), type(v))
-                    print(k,type(i),i)
-                    print(v[i])
-                    if isinstance(v[i],dict):
-                        print("Dictionary")
-                if (type(i) is not list and type(i) is not str):
-                    for e in forEach(i,group):
-                        entries.append(e)
-                if isinstance(v,dict) and isinstance(v[i],dict):
-                    for e in forEach(v,group):
-                        for q in entries:
-                            if e['unitid'] == q['unitid']:
-                                print("We already exist!")
-                            else:
-                                entries.append(e)
-            """
 
     # Keep track of all entries
-    # Check that what we're adding isn't already in the entries
-    for e in entries:
-        if e['unitid'] == entry['unitid']:
-            print("We already exist!")
     entries.append(entry)
     return entries
 
