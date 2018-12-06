@@ -3,7 +3,7 @@ import copy
 import sys
 
 def readFile(name):
-    file = open(name,'r')
+    file = open(name,'r',encoding='utf-8')
     readed = file.read()
     file.close()
     return readed
@@ -31,8 +31,19 @@ def forEach(obj, group):
     entry = {}
     entry['group'] = group
     entry['@level'] = obj['@level']
+    # Check for otherlevel
+    if '@otherlevel' in obj:
+        entry['@otherlevel'] = obj['@otherlevel']
     if 'unitid' in obj['did'].keys():
+        # Get rid of occurences of 'Series'
         entry['unitid'] = obj['did']['unitid']
+        # If we don't end with a period, add one for Excel to not get confused
+        if entry['unitid'] is not None:
+            entry['unitid'] = entry['unitid'].replace("Series ",'')
+            if entry['unitid'][-1] != '.':
+                entry['unitid'] += '.'
+            # Then, add another one because excel is still confused
+            entry['unitid'] += '.'
     else:
         entry['unitid'] = -1
     if 'unittitle' in obj['did'].keys() and '#text' in obj['did']['unittitle'].keys():
@@ -55,19 +66,16 @@ def forEach(obj, group):
                 temp = obj['did']['container']
                 for i in temp:
                     if '#text' in i.keys():
-                        entry[i['@type'].lower()] = i['#text']
+                        # Replace the dash so Excel doesn't read the cell as a date
+                        entry[i['@type'].lower()] = i['#text'].replace("-"," and ")
             # Otherwise, we only have one so use that
             else:
                 entry[obj['did']['container']['@type']] = obj['did']['container']['#text']
         # Get item count if we have scopecontent
-        #if 'scopecontent' in obj.keys() and isinstance(obj['scopecontent']['p'],str):
         if 'scopecontent' in obj.keys():
-            #print("Adding items!")
             entry['itemCount'] = obj['scopecontent']['p']
             # Digital Commons things
-            #print(entry['itemCount'])
             if entry['itemCount'] is not None and not isinstance(entry['itemCount'],str):
-                #print(entry['unitid'])
                 entry['digitalCommons'] = copy.deepcopy(entry['itemCount'])
                 if '#text' in entry['digitalCommons'].keys():
                     # Put things in correct indices
@@ -78,7 +86,6 @@ def forEach(obj, group):
                     # Check if we have an array or a dictionary
                     if isinstance(entry['digitalCommons']['extref'], list):
                         for l in entry['digitalCommons']['extref']:
-                            #print(l)
                             links.append( l['@xlink:href'] )
                     else:
                         links.append( entry['digitalCommons']['extref']['@xlink:href'] )
@@ -108,19 +115,14 @@ def forEach(obj, group):
 # Create TSV file
 def sendToFile(name, entries):
     out = ""
-    keys = ['group','@level','box','folder','unitid','unittitle','itemCount','digitalCommons']
+    keys = ['group','@level','@otherlevel','box','folder','unitid','unittitle','itemCount','digitalCommons']
     # Create the header at the top
     for i in keys:
         out += i + "\t"
     out += "\n"
     # Add all entries to output
-    #print(type(entries))
-    #print(entries[0])
     for e in entries:
-        #print(e)
         for i in keys:
-            #print(type(i),type(e.keys()))
-            #print(e.keys(),i)
             if i in e.keys():
                 if isinstance(e[i],str):
                     out += e[i]
