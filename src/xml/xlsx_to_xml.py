@@ -42,7 +42,6 @@ def createEntry(row):
         for i in row.keys():
             if "Unnamed" in i and isinstance(row[i],str):
                 listed.append(row[i])
-        print(listed)
         # Convert digitalCommons entries to a string, because the nesting would be a nightmare
         digitalCommonsStr = "Digital Items: "
         for i in range(len(listed)):
@@ -88,14 +87,14 @@ def padder(val):
                 #TODO Fix this logic. Trying to pad numbers without affecting the letters
                 # Get numbers out of string
                 n = ''.join(filter(lambda x: x.isdigit(), i))
+                c = ''.join(filter(lambda x: x.isalpha(), i))
                 # Difference in length
-                l_diff = len(i)-len(n)
                 if len(n) != 0:
-                    n = format(int(n),'04d')[l_diff:]
+                    n = format(int(n),'04d')[:4-len(c)]
                 else:
-                    n = format(0,'04d')[l_diff-1:]
-                print(i,n)
-                out += i[:-l_diff] + n
+                    n = format(0,'04d')[:4-len(c)-1]
+                #print(i,n)
+                out += c + n
             else:
                 out += i
             out += "."
